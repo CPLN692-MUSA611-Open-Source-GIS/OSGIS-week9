@@ -3,6 +3,7 @@
 ===================== */
 var vaccination;
 var zipcode;
+var population;
 
 vaccinationPath = 'https://raw.githubusercontent.com/zjalexzhou/OSGIS-week9/master/assignment/data/vaccination_by_zip.json'
 zipcodePath = 'https://raw.githubusercontent.com/CPLN692-MUSA611-Open-Source-GIS/datasets/master/geojson/Zipcodes_Poly.geojson'
@@ -40,25 +41,28 @@ $(document).ready(function() {
         polygon.eachLayer(eachFeatureFunction)
       })
     $.ajax({
-        url: 'https://raw.githubusercontent.com/zjalexzhou/OSGIS-week9/master/assignment/data/zipcode_population/allPop.csv',
-        dataType: 'text',
+        url: 'https://raw.githubusercontent.com/zjalexzhou/OSGIS-week9/master/assignment/data/population_by_zip.json',
+        dataType: 'json',
       }).done(function(data){
-          
-          var allTextLines = data.split(/\r\n|\n/);
-          var headers = allTextLines[0].split(',');
-          let zipcode_population = []
-          allTextLines.shift()
-          _.each(allTextLines, function(e){
-              zipcode_population.push({
-                  zipcode: e.split(',')[1],
-                  population: parseInt(e.split(',')[2])
-                })
-          })
-          console.log(zipcode_population)
-        })
-        //   for (var i=1; i<allTextLines.length; i++){
-        //     zipcode_population.push({
-        //         zipcode: allTextLines[i].split(',')[1],
-        //         population: parseInt(allTextLines[i].split(',')[2])})
-        //   }
+        population = JSON.parse(data)
+        console.log(population)
+      })
+        // // Note: the code lines below are intended for wrangling .csv file
+        //   var allTextLines = data.split(/\r\n|\n/);
+        //   var headers = allTextLines[0].split(',');
+        //   let zipcode_population = []
+        //   allTextLines.shift()
+        //   _.each(allTextLines, function(e){
+        //       zipcode_population.push({
+        //           zipcode: e.split(',')[1],
+        //           population: parseInt(e.split(',')[2])
+        //         })
+        //   })
+        //   console.log(zipcode_population)
+        // })
+        // //   for (var i=1; i<allTextLines.length; i++){
+        // //     zipcode_population.push({
+        // //         zipcode: allTextLines[i].split(',')[1],
+        // //         population: parseInt(allTextLines[i].split(',')[2])})
+        // //   }
 })
