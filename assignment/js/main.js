@@ -1,16 +1,14 @@
 /* =====================
   Global Variables
 ===================== */
-var vaccination;
-var zipcode;
-var population;
+
+var zipInfo = [];
 var ctx = document.getElementById('myChart').getContext('2d');
 var myChart;
 
 vaccinationPath = 'https://raw.githubusercontent.com/zjalexzhou/OSGIS-week9/master/assignment/data/vaccination_by_zip.json'
 zipcodePath = 'https://raw.githubusercontent.com/CPLN692-MUSA611-Open-Source-GIS/datasets/master/geojson/Zipcodes_Poly.geojson'
 populationPath = 'https://raw.githubusercontent.com/zjalexzhou/OSGIS-week9/master/assignment/data/population_by_zip.json'
-
 
 var doughnutChart = function(data){
   myChart = new Chart(ctx, {
@@ -36,7 +34,7 @@ var doughnutChart = function(data){
                   // 'rgba(153, 102, 255, 1)',
                   // 'rgba(255, 159, 64, 1)'
               ],
-              hoverOffset: 3
+              hoverOffset: 10
           }]
       },
   });
@@ -55,59 +53,69 @@ var eachFeatureFunction = function(layer) {
         // Zoom to a particular feature when clicked
         map.fitBounds(event.target.getBounds())
         let zip = event.target.feature.properties.CODE
-        // Retrieve zipcode-level population and vaccination info.
-        let zipInfo = {zipcode: zip};
-        zipInfo['total_population'] = population[zip].population;
-        zipInfo['fully_vaccinated'] = vaccination[zip].fully_vaccinated;
-        zipInfo['partially_vaccinated'] = vaccination[zip].partially_vaccinated;
-        zipInfo['unvaccianted'] = population[zip].population - vaccination[zip].fully_vaccinated - vaccination[zip].partially_vaccinated;
-        zipInfo['vaccinated_ratio'] = (vaccination[zip].fully_vaccinated + vaccination[zip].partially_vaccinated) / population[zip].population;
-        console.log(zipInfo)
-        doughnutChart(zipInfo)
+        chartData = _.filter(zipInfo, function(e){
+          return (e.zipcode == zip)
+        })
+        if(chartData[0].vaccinated_ratio >= 0){
+          doughnutChart(chartData[0])
+        }
     });
   };
 
+var vaccinated_ratio_style = function(feature){
+}
+
 $(document).ready(function() {
 
-    // Request vaccination data
-    $.ajax(vaccinationPath).done(function(data) {
-        vaccination = JSON.parse(data);
-        console.log(vaccination)
-      })
     // Request zipcode data (with polygon features)
     $.ajax(zipcodePath).done(function(data) {
-        zipcode = JSON.parse(data);
+        let zipcode = JSON.parse(data);
         console.log(zipcode)
-
         // Fixing an AWFUL bug caused by BAD data: Features *NEED* to have geometries...
         zipcode.features = _.filter(zipcode.features, function(f) { return f.geometry; });
+        // Generate a list of all zipcodes in Philly
+        let zipList = [];
+        _.each(zipcode.features, function(e){
+          zipList.push(e.properties.CODE)
+        })
+        // console.log(ziplist)
         // Plot zipcode polygons
         let polygon  = L.geoJson(zipcode, {
+          style: vaccinated_ratio_style
           }).addTo(map);
         console.log(polygon)
-
         polygon.eachLayer(eachFeatureFunction)
+        // Request vaccination data
+        $.ajax(vaccinationPath).done(function(data) {
+          let vaccination = JSON.parse(data);
+          // console.log(Object.keys(vaccination))
+          // Request population data
+          $.ajax(populationPath).done(function(data){
+            let population = JSON.parse(data);
+            // console.log(Object.keys(population))
+            _.each(zipList, function(eachZip){
+              if(_.isUndefined(vaccination[eachZip])){
+                eachZipInfo = {
+                  "zipcode": eachZip, 
+                  "total_population": 'Unavailable',
+                  "fully_vaccinated": 'Unavailable',
+                  "partially_vaccinated": 'Unavailable',
+                  "unvaccianted": 'Unavailable',
+                  "vaccinated_ratio": 'Unavailable'
+                }
+              } else {
+                eachZipInfo = {
+                  "zipcode": eachZip, 
+                  "total_population": population[eachZip].population,
+                  "fully_vaccinated": vaccination[eachZip].fully_vaccinated,
+                  "partially_vaccinated": vaccination[eachZip].partially_vaccinated,
+                  "unvaccianted": population[eachZip].population - vaccination[eachZip].fully_vaccinated - vaccination[eachZip].partially_vaccinated,
+                  "vaccinated_ratio": (vaccination[eachZip].fully_vaccinated + vaccination[eachZip].partially_vaccinated) / population[eachZip].population
+                }
+              }
+              zipInfo.push(eachZipInfo)
+            })
+          })
+        })
       })
-    $.ajax(populationPath).done(function(data){
-        population = JSON.parse(data);
-        console.log(population)
-      })
-        // // Note: the code lines kept in comments below are intended for wrangling .csv file
-        //   var allTextLines = data.split(/\r\n|\n/);
-        //   var headers = allTextLines[0].split(',');
-        //   let zipcode_population = []
-        //   allTextLines.shift()
-        //   _.each(allTextLines, function(e){
-        //       zipcode_population.push({
-        //           zipcode: e.split(',')[1],
-        //           population: parseInt(e.split(',')[2])
-        //         })
-        //   })
-        //   console.log(zipcode_population)
-        // })
-        // //   for (var i=1; i<allTextLines.length; i++){
-        // //     zipcode_population.push({
-        // //         zipcode: allTextLines[i].split(',')[1],
-        // //         population: parseInt(allTextLines[i].split(',')[2])})
-        // //   }
 })
