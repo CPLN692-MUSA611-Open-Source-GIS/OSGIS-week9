@@ -40,9 +40,25 @@ $(document).ready(function() {
         polygon.eachLayer(eachFeatureFunction)
       })
     $.ajax({
-        url: 'data/zipcode/population/allPop.csv',
+        url: 'https://raw.githubusercontent.com/zjalexzhou/OSGIS-week9/master/assignment/data/zipcode_population/allPop.csv',
         dataType: 'text',
       }).done(function(data){
-          console.log(data)
-      });
+          
+          var allTextLines = data.split(/\r\n|\n/);
+          var headers = allTextLines[0].split(',');
+          let zipcode_population = []
+          allTextLines.shift()
+          _.each(allTextLines, function(e){
+              zipcode_population.push({
+                  zipcode: e.split(',')[1],
+                  population: parseInt(e.split(',')[2])
+                })
+          })
+          console.log(zipcode_population)
+        })
+        //   for (var i=1; i<allTextLines.length; i++){
+        //     zipcode_population.push({
+        //         zipcode: allTextLines[i].split(',')[1],
+        //         population: parseInt(allTextLines[i].split(',')[2])})
+        //   }
 })
