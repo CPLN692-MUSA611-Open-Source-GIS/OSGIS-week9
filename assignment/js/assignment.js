@@ -68,8 +68,9 @@ var tileOpts = {
 var Stamen_TonerLite = L.tileLayer('http://stamen-tiles-{s}.a.ssl.fastly.net/toner-lite/{z}/{x}/{y}.{ext}', tileOpts).addTo(map);
 
 
-
-$.ajax('https://raw.githubusercontent.com/CPLN692-MUSA611-Open-Source-GIS/datasets/master/geojson/Zipcodes_Poly.geojson').done(function(data){
+$.ajax('https://raw.githubusercontent.com/CPLN692-MUSA611-Open-Source-GIS/OSGIS-week9/master/assignment/vaccination_by_zip.json').done(function(data){
+  vaccination = JSON.parse(data);
+  $.ajax('https://raw.githubusercontent.com/CPLN692-MUSA611-Open-Source-GIS/datasets/master/geojson/Zipcodes_Poly.geojson').done(function(data){
   zipCode = JSON.parse(data);
   var mapBoundary = L.geoJson(turf.envelope(zipCode)).getBounds();
   map.fitBounds(mapBoundary);
@@ -77,12 +78,11 @@ $.ajax('https://raw.githubusercontent.com/CPLN692-MUSA611-Open-Source-GIS/datase
   var geoJsonLayer = L.geoJson(zipCode,{
     style: function(features){
       if(vaccination[features.properties.CODE]=== undefined){
-        //console.log("19112")
         return{fillOpacity:0}
       }
       if(vaccination[features.properties.CODE] != undefined){
         //console.log(features.properties.CODE);
-        console.log(parseInt((vaccination[features.properties.CODE].fully_vaccinated + vaccination[features.properties.CODE].partially_vaccinated)/zipPop[features.properties.CODE].population*10));
+        //console.log(parseInt((vaccination[features.properties.CODE].fully_vaccinated + vaccination[features.properties.CODE].partially_vaccinated)/zipPop[features.properties.CODE].population*10));
         return{fillOpacity:0.9,
         fillColor: color[parseInt((vaccination[features.properties.CODE].fully_vaccinated + vaccination[features.properties.CODE].partially_vaccinated)/zipPop[features.properties.CODE].population*10)-1]}
       }
@@ -98,68 +98,69 @@ $.ajax('https://raw.githubusercontent.com/CPLN692-MUSA611-Open-Source-GIS/datase
   });
 
   //when polygon clicked
-  $('.leaflet-clickable').click(function(e){
-    selectedZip = $(e.currentTarget.id).selector
-    console.log(selectedZip);
-    console.log(vaccination[selectedZip]);
-    //remove plot
-    myChart.destroy();
-    console.log(typeof(myChart))
-    myChartDoughnut.destroy();
-    //make bar plot 
-    ctx = document.getElementById('myChart1');
-    myChart = new Chart(ctx, {
-        type: 'bar',
+    $('.leaflet-clickable').click(function(e){
+      selectedZip = $(e.currentTarget.id).selector
+      console.log(selectedZip);
+      console.log(vaccination[selectedZip]);
+      //remove plot
+      myChart.destroy();
+      console.log(typeof(myChart))
+      myChartDoughnut.destroy();
+      //make bar plot 
+      ctx = document.getElementById('myChart1');
+      myChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+              labels: ['Partially Vaccinated','Fully Vaccinated'],
+              datasets: [{
+                  label: 'Population Vaccinated',
+                  data: [vaccination[selectedZip].partially_vaccinated,vaccination[selectedZip].fully_vaccinated],
+                  backgroundColor: [
+                      'rgba(255, 99, 132, 0.2)',
+                      'rgba(54, 162, 235, 0.2)'
+                  ],
+                  borderColor: [
+                      'rgba(255, 99, 132, 1)',
+                      'rgba(54, 162, 235, 1)'
+                  ],
+                  borderWidth: 1
+              }]
+          },
+          options: {
+            responsive: false,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+          }
+      });
+      ctx1 = document.getElementById('myChart2');
+      myChartDoughnut = new Chart(ctx1, {
+        type: 'doughnut',
         data: {
-            labels: ['Partially Vaccinated','Fully Vaccinated'],
+            labels: ['Partially Vaccinated','Fully Vaccinated','Not Vaccinated'],
             datasets: [{
                 label: 'Population Vaccinated',
-                data: [vaccination[selectedZip].partially_vaccinated,vaccination[selectedZip].fully_vaccinated],
+                data: [vaccination[selectedZip].partially_vaccinated,vaccination[selectedZip].fully_vaccinated,zipPop[selectedZip].population - vaccination[selectedZip].partially_vaccinated - vaccination[selectedZip].fully_vaccinated],
                 backgroundColor: [
-                    'rgba(255, 99, 132, 0.2)',
-                    'rgba(54, 162, 235, 0.2)'
-                ],
-                borderColor: [
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(54, 162, 235, 1)'
-                ],
-                borderWidth: 1
+                  'rgba(255, 99, 132, 0.2)',
+                  'rgba(54, 162, 235, 0.2)',
+                  'rgba(250, 187, 45, 0.2)'
+                ]
             }]
         },
         options: {
           responsive: false,
           maintainAspectRatio: false,
-          scales: {
-              y: {
-                  beginAtZero: true
-              }
-          }
         }
-    });
-    ctx1 = document.getElementById('myChart2');
-    myChartDoughnut = new Chart(ctx1, {
-      type: 'doughnut',
-      data: {
-          labels: ['Partially Vaccinated','Fully Vaccinated','Not Vaccinated'],
-          datasets: [{
-              label: 'Population Vaccinated',
-              data: [vaccination[selectedZip].partially_vaccinated,vaccination[selectedZip].fully_vaccinated,zipPop[selectedZip].population - vaccination[selectedZip].partially_vaccinated - vaccination[selectedZip].fully_vaccinated],
-              backgroundColor: [
-                'rgba(255, 99, 132, 0.2)',
-                'rgba(54, 162, 235, 0.2)',
-                'rgba(250, 187, 45, 0.2)'
-              ]
-          }]
-      },
-      options: {
-        responsive: false,
-        maintainAspectRatio: false,
-      }
-    });
+      });
+    })
   })
 })
+
+
 //read in vaccination data
-$.ajax('https://raw.githubusercontent.com/CPLN692-MUSA611-Open-Source-GIS/OSGIS-week9/master/assignment/vaccination_by_zip.json').done(function(data){
-  vaccination = JSON.parse(data);
-})
+
 
