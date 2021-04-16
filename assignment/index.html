@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- CSS Imports -->
+    <link rel="stylesheet" href="css/reset.css" />
+    <link rel="stylesheet" href="css/leaflet.css" />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+
+    <!--Left Panel-->
+    <div id="sidebar">
+      <h1>Vaccination Statistics in Philadelphia</h1>
+      <div id='chartContainer'>
+        <h2>Click on any polygon to explore...</h2>
+        <div id=data-brief style="display:none">
+          <small>Population: </small><p id=population></p>
+          <small>Vaccinated Ratio: </small><p id=vaccinated-ratio></p>
+          <small>Fully Vaccinated: </small><p id=fully-vaccinated></p>
+          <small>Partially Vaccinated: </small><p id=partially-vaccinated></p>
+          <small>Unvaccinated: </small><p id=unvaccinated></p>
+        </div>
+        <canvas id="chart-bar"></canvas>
+        <small id='text-for-NA-data'></small>
+        <canvas id="chart-doughnut"></canvas>
+      </div>
+    </div>
+
+    <!-- Map -->
+    <div id="map"></div>
+
+    <!-- Javascript Imports -->
+    <script src="js/leaflet.js"></script>
+    <script src="js/underscore.js"></script>
+    <script src="js/jquery-2.2.0.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/2.0.2/turf.js"></script>
+    <script src="js/setup.js"></script>
+    <script src="js/main.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/mathjs/lib/browser/math.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.1.1/chroma.min.js" integrity="sha512-RWI59o+PDXjPl3bakOf3k2ZbDtfvn/OU/ZKe6QmkE0V/ve7vYKEJe0RdkDueS+VkghBazP+1o4LKGON+pHUa5g==" crossorigin="anonymous"></script>
+  </body>
+</html>

@@ -22,8 +22,6 @@ body {
     padding: 20px;
 }
 
-<<<<<<< Updated upstream
-||||||| merged common ancestors
 #filter-status {
     word-wrap: break-word;
 }
@@ -69,7 +67,6 @@ body {
     background-color: #9789C1
 }
 
-=======
 h1 {
     margin-bottom: 10px;
 }
@@ -90,4 +87,3 @@ h2 {
     50% {opacity: 1; stroke-width: 10;}
     100% {opacity: 1;}
 }
->>>>>>> Stashed changes
