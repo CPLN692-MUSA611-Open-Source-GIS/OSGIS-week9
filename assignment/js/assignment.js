@@ -44,7 +44,7 @@ var myChartDoughnut = new Chart(ctx1, {
   }
 });
 
-
+var color = chroma.scale(['#fafa6e','#2A4858']).mode('lch').colors(6)
 
 
 /* =====================
@@ -77,13 +77,14 @@ $.ajax('https://raw.githubusercontent.com/CPLN692-MUSA611-Open-Source-GIS/datase
   var geoJsonLayer = L.geoJson(zipCode,{
     style: function(features){
       if(vaccination[features.properties.CODE]=== undefined){
-        console.log("19112")
+        //console.log("19112")
         return{fillOpacity:0}
       }
       if(vaccination[features.properties.CODE] != undefined){
-        console.log(features.properties.CODE);
-        console.log((vaccination[features.properties.CODE].fully_vaccinated + vaccination[features.properties.CODE].partially_vaccinated)/zipPop[features.properties.CODE].population);
-        return{fillOpacity:(vaccination[features.properties.CODE].fully_vaccinated + vaccination[features.properties.CODE].partially_vaccinated)/zipPop[features.properties.CODE].population}
+        //console.log(features.properties.CODE);
+        console.log(parseInt((vaccination[features.properties.CODE].fully_vaccinated + vaccination[features.properties.CODE].partially_vaccinated)/zipPop[features.properties.CODE].population*10));
+        return{fillOpacity:0.9,
+        fillColor: color[parseInt((vaccination[features.properties.CODE].fully_vaccinated + vaccination[features.properties.CODE].partially_vaccinated)/zipPop[features.properties.CODE].population*10)-1]}
       }
     }
   }).addTo(map);
