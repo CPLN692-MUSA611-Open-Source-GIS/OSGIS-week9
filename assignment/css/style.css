@@ -34,6 +34,47 @@ body {
   background-color: rgba(71, 71, 71, 0.616);
 }
 
+.legend {
+  position: absolute;
+  left: 5%;
+  width: 200px;
+  top: 100px;
+  bottom: 700px;
+  padding: 20px;
+  z-index: 2000;
+}
+
+.legend .legend-title {
+  left:5%;
+  text-align: left;
+  margin-bottom: 5px;
+  font-weight: bold;
+  font-size: 90%;
+  background-color: rgba(154, 166, 179, 0.664);
+  }
+
+.legend ul.legend-labels li span {
+  left:5%;
+  display: block;
+  float: left;
+  height: 16px;
+  width: 30px;
+  margin-right: 5px;
+  margin-left: 0;
+  border: 1px solid #999;
+  background-color: rgba(154, 166, 179, 0.664);
+  }
+
+.legend .legend-scale ul {
+  left:5%;
+  margin: 0;
+  margin-bottom: 5px;
+  padding: 0;
+  float: left;
+  list-style: none;
+  background-color: rgba(154, 166, 179, 0.664);
+  }
+
 .item {
   padding: 10px;
   background-color: #eee;

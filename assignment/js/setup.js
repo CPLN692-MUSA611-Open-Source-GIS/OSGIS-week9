@@ -25,10 +25,15 @@ var featureGroup;
 var initialBounds = map.getBounds();
 var vaxData;
 var ctx;
-var myChart;
-//var zip = [];
+var barChart;
+var pieChart;
 
-var myStyle = function (feature) {};
+var myStyle = function (feature) {
+  if (feature.properties.vaxData.vaxdPerc <= 20) {return {color: '#ffffcc'}}
+  else if (feature.properties.vaxData.vaxdPerc < 30) {return {color: '#c2e699'}}
+  else if (feature.properties.vaxData.vaxdPerc < 40) {return {color: '#78c679'}}
+  else if (feature.properties.vaxData.vaxdPerc >= 40) {return {color: '#238443'}}
+};
 
 var showResults = function () {
   /* =====================
@@ -50,18 +55,12 @@ var eachFeatureFunction = function (layer) {
     Check out layer.feature to see some useful data about the layer that
     you can use in your application.
     ===================== */
-    //console.log(layer.feature);
-    //showResults();
-    //theZIP = layer.feature.properties.CODE;
   });
 };
 
+
 var myFilter = function (feature) {
-  // if (feature.properties.fully_vaccinated <= 4000) {return {color: '#DFFF00'}}
-  // else if (feature.properties.fully_vaccinated < 6000) {return {color: '#0400ff'}}
-  // else if (feature.properties.fully_vaccinated < 9000) {return {color: '#e29607'}}
-  // else if (feature.properties.fully_vaccinated >= 9000) {return {color: '#DE3163'}}
-  return true;
+  return true
 };
 
 $(document).ready(function () {
@@ -77,19 +76,34 @@ $(document).ready(function () {
 
       $.ajax(vax_dataset).done(function (data) {
         vaxData = JSON.parse(data);
-        // vaxData.map(function(item){
-        //   item.part_vaxd_or_more = item.partially_vaccinated + item.fully_vaccinated;
-        //  });
+   
         philaZIPPop = _.map(philaZIPPop, function (item) {
           return _.extend(item, vaxData[item.zip]);
         });
-        //parsedZIPs.features = _.map(parsedZIPs.features, function(item) { return _.extend(item.properties, vaxData[item.properties.CODE])})
-        // This is over writing the other things in the features list.
-        //parsedZIPs.features = _.map(parsedZIPs.features, function(item) { item.properties =  _.extend(item.properties, _.findWhere(philaZIPPop, {zip: Number(item.properties.CODE)}))})
+
+        _.map(philaZIPPop, function(item) {
+          item.fullyVaxdPerc =
+          Math.round(
+            (item.fully_vaccinated / item.pop) * 10000
+          ) / 100;
+          item.partVaxdPerc =
+          Math.round(
+            (item.partially_vaccinated / item.pop) * 10000
+          ) / 100;
+          item.unVaxdPerc = 100 - (item.fullyVaxdPerc + item.partVaxdPerc);
+          item.vaxdPerc = 100 - item.unVaxdPerc;
+        })
+
+        _.map(parsedZIPs.features, function(item) { 
+          item.properties.vaxData = _.findWhere(philaZIPPop, {zip: Number(item.properties.CODE)})
+        })
+        
         featureGroup = L.geoJson(parsedZIPs, {
           style: myStyle,
           filter: myFilter,
-        }).addTo(map);
+        }).bindPopup(function (layer) {
+          return `ZIP CODE: ${layer.feature.properties.CODE}`;
+      }).addTo(map);
 
         featureGroup.eachLayer(function (layer) {
           layer.on("click", function (event) {
@@ -99,27 +113,18 @@ $(document).ready(function () {
               return item["zip"] == theZIP;
             })[0];
 
-            fullyVaxdZipPerc =
-              Math.round(
-                (vaxDataZIP.fully_vaccinated / popDataZIP.pop) * 10000
-              ) / 100;
-            partVaxdZipPerc =
-              Math.round(
-                (vaxDataZIP.partially_vaccinated / popDataZIP.pop) * 10000
-              ) / 100;
-            unVaxdZipPerc = 100 - (fullyVaxdZipPerc + partVaxdZipPerc);
-
             ctx = $("#barChart");
             barChart = new Chart(ctx, {
               type: "bar",
               data: {
-                labels: ["Partially Vaccinated", "Fully Vaccinated"],
+                labels: ["Partially Vaccinated", "Fully Vaccinated", "Total Population"],
                 datasets: [
                   {
                     label: `People Vaccinated, ZIP Code ${theZIP}`,
                     data: [
-                      vaxDataZIP.partially_vaccinated,
-                      vaxDataZIP.fully_vaccinated,
+                      layer.feature.properties.vaxData.partially_vaccinated,
+                      layer.feature.properties.vaxData.fully_vaccinated,
+                      layer.feature.properties.vaxData.pop,
                     ],
                     backgroundColor: [
                       "rgba(86, 121, 227, 0.9)",
@@ -153,7 +158,9 @@ $(document).ready(function () {
                 datasets: [
                   {
                     label: "Vaxd people",
-                    data: [partVaxdZipPerc, fullyVaxdZipPerc, unVaxdZipPerc],
+                    data: [layer.feature.properties.vaxData.partVaxdPerc, 
+                          layer.feature.properties.vaxData.fullyVaxdPerc, 
+                          layer.feature.properties.vaxData.unVaxdPerc],
                     backgroundColor: [
                       "rgb(86, 121, 227)",
                       "rgb(25, 42, 94)",
