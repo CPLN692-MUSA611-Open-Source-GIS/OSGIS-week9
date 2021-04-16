@@ -21,50 +21,39 @@ var vaccination = "https://raw.githubusercontent.com/CPLN692-MUSA611-Open-Source
 var featureGroup;
 var myBarChart;
 var population = "https://raw.githubusercontent.com/hqiao97/data_test/main/zip_pop.json";
-// var color = chroma.scale(['yellow', '008ae5']).mode('lch').colors(6)
+var pop;
+var parsedvac;
 
-// var colors = chroma.scale(['#fafa6e','#2A4858']).mode('lch').colors(6)
+var color = chroma.scale(['#fafa6e','#2A4858']).mode('lch').colors(6)
+
+
+//find total population
+var getTotalPop = function(pop, zip){
+    for(var i in pop){
+        if(pop[i].Zip==zip){
+            var totalPop = pop[i].Population
+        }
+    }
+    return totalPop
+}
 
 var myStyle = function(feature) {
     var zip = feature.properties.CODE
-    console.log(zip)
 
-    $.ajax(vaccination).done(function(data){
-        var parsedvac = JSON.parse(data);
+    if (parsedvac[zip] === undefined){
+
+        return {fillOpacity: 0}
+    }else{
         var partial = parsedvac[zip].partially_vaccinated
         var full = parsedvac[zip].fully_vaccinated
 
-        $.ajax(population).done(function(dataPop){
-            var pop = JSON.parse(dataPop);
-            var totalPop = getTotalPop(pop, zip)
+        var totalPop = getTotalPop(pop, zip)
+        vacPer = (partial + full)/totalPop
 
-            vacPer = (partial + full)/totalPop
+        var parsedcolor = color[parseInt(vacPer*10)-1]
+        return {fillColor: parsedcolor}
 
-            console.log("VacPer Calculated")
-            console.log(partial)
-            console.log(full)
-            console.log(totalPop)
-            console.log(vacPer)
-
-            var fillColor;
-
-            if (vacPer > 0 && vacPer < 0.1){
-                console.log('red')
-                fillColor = {fillColor: 'red'}
-                return {fillColor: 'red'};
-            }
-            if (vacPer >= 0.1 && vacPer < 0.2){
-                console.log('green')
-                fillColor = {fillColor: 'green'}
-                return {fillColor: 'green'};
-            }else{
-                console.log('purple')
-                fillColor = {fillColor: 'purple'}
-                return {fillColor: 'purple'};
-            }
-
-        })
-    })
+    }
 };
 
 var showResults = function() {
@@ -115,15 +104,7 @@ var eachFeatureFunction = function(layer) {
   });
 };
 
-//find total population
-var getTotalPop = function(pop, zip){
-    for(var i in pop){
-        if(pop[i].Zip==zip){
-            var totalPop = pop[i].Population
-        }
-    }
-    return totalPop
-}
+
 
 //plot charts
 var plotChart = function(totalPop, partial, full){
@@ -183,9 +164,6 @@ var plotChart = function(totalPop, partial, full){
         data: dataPie,
     };
 
-
-
-
     if (myBarChart !== undefined){
         myBarChart.destroy()
         myPieChart.destroy()
@@ -205,29 +183,27 @@ var plotChart = function(totalPop, partial, full){
 
 }
 
-var myFilter = function(feature) {
-  return feature.properties.COLLDAY !== " ";
-};
 
 $(document).ready(function() {
   $.ajax(polygon).done(function(data) {
     var parsedData = JSON.parse(data);
-    featureGroup = L.geoJson(parsedData, {
-      style: myStyle,
-      filter: myFilter
-    }).addTo(map);
+
 
     $.ajax(population).done(function(popdat){
         pop = JSON.parse(popdat);
         console.log("Population data set below")
 
-        // featureGroup = L.geoJson(parsedData, {
-        //   style: myStyle,
-        //   filter: color[parseInt((parsedData[features.properties.CODE].fully_vaccinated))]
-        // }).addTo(map);
+        $.ajax(vaccination).done(function(datavac){
 
-        // quite similar to _.each
+            parsedvac = JSON.parse(datavac);
+
+            featureGroup = L.geoJson(parsedData, {
+                style: myStyle
+            }).addTo(map);
+
         featureGroup.eachLayer(eachFeatureFunction);
+
+    })
 
     })
 
