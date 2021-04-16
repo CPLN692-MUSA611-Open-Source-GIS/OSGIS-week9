@@ -13,9 +13,9 @@
     - Bounding box construction `turf.envelope`
     - Counting within (a spatial join) `turf.count`
   - Interactive demonstration
-    - Find point a certain distance down some linestring
-    - Extract the area of a polygon
-    - Random point on feature (more useful than you might think)
+    - Find point a certain distance down some linestring `turf.along`
+    - Extract the area of a polygon `turf.area`
+    - Random point on feature (more useful than you might think) `pointOnFeature`
     - Voronoi (very useful!)
     - Line arc construction
 - Unit conversion
@@ -35,6 +35,5 @@
 
 
 ## Homework Assignment
-
 - Complete [Charting assignment](./assignment)
 
