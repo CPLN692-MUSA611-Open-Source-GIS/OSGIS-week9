@@ -5,7 +5,10 @@
 // var crimeFilters;
 // var hexGrid;
 // var mappedGrid;
-//
+var zipcodeData
+var zipcodePopData
+var barchart
+var piechart
 // var baseHexStyle = { stroke: false }
 //
 /* =====================
@@ -29,39 +32,144 @@ var tileOpts = {
 var Stamen_TonerLite = L.tileLayer('http://stamen-tiles-{s}.a.ssl.fastly.net/toner-lite/{z}/{x}/{y}.{ext}', tileOpts).addTo(map);
 
 
-var dataset = "https://raw.githubusercontent.com/CPLN692-MUSA611-Open-Source-GIS/datasets/master/geojson/Zipcodes_Poly.geojson"
+var zipcodeURL = "https://raw.githubusercontent.com/CPLN692-MUSA611-Open-Source-GIS/datasets/master/geojson/Zipcodes_Poly.geojson"
+var zipcodeVaccURL = "https://raw.githubusercontent.com/CPLN692-MUSA611-Open-Source-GIS/OSGIS-week9/master/assignment/vaccination_by_zip.json"
+var zipcodePopURL = "https://gist.githubusercontent.com/tybradf/1211e46083b9109d0433c40e10b4908e/raw/9ca5cdd8b0ded8c8f487fa0de7c71a1f1efafa20/pa_population_by_zip.json"
 
-var vaccine = "https://raw.githubusercontent.com/kylepmccarthy/OSGIS-week9/master/covid_vaccines_by_zip.geojson"
+var createBarChart = function(vaccData) {
+  var ctx = document.getElementById('myBarChart').getContext('2d');
+  barchart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+          labels: '# of Votes',
+          datasets: [{
+              label: ['Red', 'Blue'],
+              data: [vaccData.partially_vaccinated, vaccData.fully_vaccinated],
+              backgroundColor: [
+                  'rgba(255, 99, 132, 0.2)',
+                  'rgba(54, 162, 235, 0.2)',
+                  // 'rgba(255, 206, 86, 0.2)',
+                  // 'rgba(75, 192, 192, 0.2)',
+                  // 'rgba(153, 102, 255, 0.2)',
+                  // 'rgba(255, 159, 64, 0.2)'
+              ],
+              borderColor: [
+                  'rgba(255, 99, 132, 1)',
+                  'rgba(54, 162, 235, 1)',
+                  // 'rgba(255, 206, 86, 1)',
+                  // 'rgba(75, 192, 192, 1)',
+                  // 'rgba(153, 102, 255, 1)',
+                  // 'rgba(255, 159, 64, 1)'
+              ],
+              borderWidth: 1
+          }]
+      },
+      options: {
+          scales: {
+              y: {
+                  beginAtZero: true
+              }
+          }
+      }
+  })
+};
 
-var featureGroup;
+var updateBarChart = function(vaccData){
+  barchart.data.datasets[0].data[0]=vaccData.partially_vaccinated
+  barchart.data.datasets[0].data[1]=vaccData.fully_vaccinated
+  barchart.update()
+}
 
-// $.ajax({
-//   type: 'GET',
-//   url : 'file:///D:/Upenn/MUSA611/OSGIS-week9/assignment/vaccination_by_zip.json',
-//   success: function(data) {
-//    console.log('success',data);
-//    }
-//   });
+var createPieChart = function(popData, vaccData){
+  var unvaccinated = popData.pop - vaccData.partially_vaccinated - vaccData.fully_vaccinated
+  var ctx = document.getElementById('myPieChart').getContext('2d');
+  var piechart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+          labels: ['Unvaccinated','Partial', 'Full'],
+          datasets: [{
+              label: 'Vaccinations',
+              data: [unvaccinated, vaccData.partially_vaccinated, vaccData.fully_vaccinated],
+              backgroundColor: [
+                  'rgba(255, 99, 132, 0.2)',
+                  'rgba(54, 162, 235, 0.2)',
+                  'rgba(255, 206, 86, 0.2)'
+                  // 'rgba(75, 192, 192, 0.2)',
+                  // 'rgba(153, 102, 255, 0.2)',
+                  // 'rgba(255, 159, 64, 0.2)'
+              ],
+              // borderColor: [
+              //     'rgba(255, 99, 132, 1)',
+              //     'rgba(54, 162, 235, 1)',
+              //     'rgba(255, 206, 86, 1)'
+              //     // 'rgba(75, 192, 192, 1)',
+              //     // 'rgba(153, 102, 255, 1)',
+              //     // 'rgba(255, 159, 64, 1)'
+              // ],
+              //borderWidth: 1
+              hoverOffset: 4
+          }]
+      },
+      // options: {
+      //     scales: {
+      //         y: {
+      //             beginAtZero: true
+      //         }
+      //     }
+      // }
+  })
+}
 
-$.ajax('https://raw.githubusercontent.com/CPLN692-MUSA611-Open-Source-GIS/OSGIS-week9/master/assignment/vaccination_by_zip.json').done(function(data) {
-   console.log('success',data);
-});
+var updatePieChart = function(popData, vaccData){
+  var unvaccinated = popData.pop - vaccData.partially_vaccinated - vaccData.fully_vaccinated
+  piechart.data.datasets[0].data[0]=vaccData.unvaccinated
+  piechart.data.datasets[0].data[1]=vaccData.fully_vaccinated
+  piechart.data.datasets[0].data[3]=vaccData.partially_vaccinated
+  piechart.update()
+}
 
+$.when($.ajax(zipcodeURL), $.ajax(zipcodeVaccURL), $.ajax(zipcodePopURL)).then(function(zipcodeRes, zipcodeVaccRes, zipcodePopRes) {
+  zipcodeData = JSON.parse(zipcodeRes[0])
+  zipcodeVaccData = JSON.parse(zipcodeVaccRes[0])
+  zipcodePopData = JSON.parse(zipcodePopRes[0])
 
-$(document).ready(function() {
-  $.ajax(dataset).done(function(data) {
-    var parsedData = JSON.parse(data);
-    featureGroup = L.geoJson(parsedData, {
-    }).addTo(map);
+  L.geoJSON(zipcodeData, {
+    onEachFeature: function(feat, layer){
+      layer.on('click', function(e){
+        var zipcode = feat.properties.CODE
+        var vaccinationData = zipcodeVaccData[zipcode]
+        var populationData = zipcodePopData.filter(function(datum){
+          return datum.zip === Number(zipcode)
+        })[0]
 
-    // quite similar to _.each
-    //featureGroup.eachLayer(eachFeatureFunction);
-  });
-});
+        //set uup for the bar chart
+        if (barchart){
+          updateBarChart(vaccinationData)
+        } else {
+          createBarChart(vaccinationData)
+        }
 
-dataset.on('click', function() {
-  console.log(feature.properties.CODE)
+        //set up bar chart
+        if (piechart){
+          updatePieChart(populationData, vaccinationData)
+        } else {
+          createPieChart(populationData, vaccinationData)
+        }
+      })
+    }
+  }).addTo(map)
 })
+
+// $.ajax(zipcodes).done(function(res){
+//   $.ajax("https://raw.githubusercontent.com/CPLN692-MUSA611-Open-Source-GIS/OSGIS-week9/master/assignment/vaccination_by_zip.json").done(function(pipZipData){
+//     $.ajax().done(function(){
+//     })
+//     L.geojson(zipcodeData).addTo(map)
+// })
+//
+//   dataset.on('click', function() {
+//     console.log(feature.properties.CODE)
+//   })
 
 
 
