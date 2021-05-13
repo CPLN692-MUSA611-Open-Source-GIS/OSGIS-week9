@@ -24,34 +24,11 @@ var zipcodeVaccURL = "https://raw.githubusercontent.com/CPLN692-MUSA611-Open-Sou
 var zipcodePopURL = "https://gist.githubusercontent.com/tybradf/1211e46083b9109d0433c40e10b4908e/raw/9ca5cdd8b0ded8c8f487fa0de7c71a1f1efafa20/pa_population_by_zip.json"
 
 
-var createBarChart = function(){
+var createBarChart = function(datum){
   var ctx = document.getElementById('myChart');
   barChart = new Chart(ctx, {
     type: 'bar',
-    data: {
-        labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
-        datasets: [{
-            label: '# of Votes',
-            data: [12, 19, 3, 5, 2, 3],
-            backgroundColor: [
-                'rgba(255, 99, 132, 0.2)',
-                'rgba(54, 162, 235, 0.2)',
-                'rgba(255, 206, 86, 0.2)',
-                'rgba(75, 192, 192, 0.2)',
-                'rgba(153, 102, 255, 0.2)',
-                'rgba(255, 159, 64, 0.2)'
-            ],
-            borderColor: [
-                'rgba(255, 99, 132, 1)',
-                'rgba(54, 162, 235, 1)',
-                'rgba(255, 206, 86, 1)',
-                'rgba(75, 192, 192, 1)',
-                'rgba(153, 102, 255, 1)',
-                'rgba(255, 333, 64, 1)'
-            ],
-            borderWidth: 1
-        }]
-    },
+    data: datum,
     options: {
         scales: {
             y: {
@@ -62,21 +39,34 @@ var createBarChart = function(){
 });
 }
 
+var updateBarChart = function(vaccData){
+  barChart.data.datasets[0].data[0] = vaccData.partially_vaccinated
+  barChart.data.datasets[0].data[0] = vaccData.fully_vaccinated
+  barChart.update()
+}
+
 $.when($.ajax(zipcodeURL),$.ajax(zipcodePopURL)).then(function(zipcodeRes, zipcodePopRes, third){
   zipcodeData = JSON.parse(zipcodeRes[0])
-  zipcodePopData = JAON.parse(zipcodePopRes[0])
+  zipcodePopData = JSON.parse(zipcodePopRes[0])
+  zipcodeVaccData = JSON.parse(zipcodePopRes[0])
+  console.log(zipcodePopData[0])
 
-  L.geoJSON(zipcodeData,{
+  L.geoJson(zipcodeData,{
     oneEachFeature: function(feat, layer){
       layer.on('click',function(e){
         console.log(feat,layer)
         var zipcode = feat.properties.CODE
         console.log(zipcode, zipcodePopData[zipcode])
-        createBarChart(zipcodePopData[zipcode])
+        if(barChart){
+          updateBarChart(zipcodeVaccData[zipcode])
+        }else{
+          createBarChart(zipcodePopData[zipcode])
+        }
+        console.log(zipcodePopData.filter(function(datum){
+          datum.zip === zipcode
+        }))
       })
-    }
+    },
+    style: {color: "white", weight: 2.5}
   }).addTo(map)
 })
-
-
-createBarChart()
